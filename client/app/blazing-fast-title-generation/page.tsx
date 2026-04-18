@@ -8,6 +8,7 @@ export default function TitleGenerationPage() {
   const [title, setTitle] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [isReadmeOpen, setIsReadmeOpen] = useState(false);
 
   const handleGenerate = async () => {
     if (!text.trim()) {
@@ -51,9 +52,17 @@ export default function TitleGenerationPage() {
         </Link>
       </header>
       
-      <main className="flex-1 w-full max-w-3xl mx-auto px-6 py-4">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight mb-2">Blazing Fast Title Generation</h1>
+      <main className="flex-1 w-full max-w-3xl mx-auto px-6 py-4 relative">
+        <div className="mb-6 flex flex-col items-start gap-2">
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold tracking-tight">Blazing Fast Title Generation</h1>
+            <button 
+              onClick={() => setIsReadmeOpen(true)}
+              className="text-sm text-gray-500 underline underline-offset-4 hover:text-black transition-colors cursor-pointer"
+            >
+              Readme
+            </button>
+          </div>
           <p className="text-sm text-gray-600">
             Paste your content below and click generate to instantly get a catchy title.
           </p>
@@ -98,6 +107,51 @@ export default function TitleGenerationPage() {
             />
           </div>
         </div>
+
+        {/* Readme Modal */}
+        {isReadmeOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 className="text-lg font-bold">Project Readme</h2>
+                <button 
+                  onClick={() => setIsReadmeOpen(false)}
+                  className="text-gray-400 hover:text-black transition-colors"
+                  aria-label="Close"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto max-h-[60vh]">
+                <div className="prose prose-sm prose-gray">
+                  <h3 className="font-bold text-lg mb-2">Blazing Fast Title Generation</h3>
+                  <p className="mb-4 text-gray-700">
+                    This project uses a FastAPI backend paired with a Next.js frontend to instantly generate captivating titles for any given block of text. This application acts as a streamlined testbed for exploring inference speed and LLM integration in a sleek, minimalistic environment.
+                  </p>
+                  
+                  <h4 className="font-semibold text-md mb-2">How it works:</h4>
+                  <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-1">
+                    <li>Built with Next.js App Router for optimal frontend performance.</li>
+                    <li>Connected to a lightweight Python FastAPI server (`localhost:8000`).</li>
+                    <li>Designed to provide a fluid, instant, and high-contrast user experience.</li>
+                  </ul>
+                  
+                  <p className="text-gray-500 italic text-xs">
+                    *Ensure your FastAPI backend is running before testing the title generation feature.
+                  </p>
+                </div>
+              </div>
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 text-right">
+                <button 
+                  onClick={() => setIsReadmeOpen(false)}
+                  className="px-4 py-2 bg-black text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
