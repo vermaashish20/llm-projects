@@ -272,7 +272,7 @@ export default function ClientVideoAnswerEngine() {
               </button>
             </div>
             
-            <div className={`flex-1 flex flex-col min-w-[300px] transition-opacity duration-300 ${showTranscription ? "opacity-100" : "opacity-0 hidden"}`}>
+            <div className={`flex-1 overflow-y-auto flex flex-col min-w-[300px] transition-opacity duration-300 ${showTranscription ? "opacity-100" : "opacity-0 hidden"} pr-2`}>
               {transcription ? (
                 <div className="text-gray-800 leading-relaxed whitespace-pre-wrap font-medium">{transcription}</div>
               ) : (

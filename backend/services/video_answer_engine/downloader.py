@@ -1,5 +1,6 @@
 import yt_dlp
 import os
+import uuid
 
 def download_youtube_video(url: str, output_dir: str = "downloads"):
     """
@@ -8,9 +9,10 @@ def download_youtube_video(url: str, output_dir: str = "downloads"):
     """
     os.makedirs(output_dir, exist_ok=True)
     
+    file_id = str(uuid.uuid4())
     ydl_opts = {
         'format': 'bestaudio/best',  # Get best audio only
-        'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'), # Name file as 'Video Title'
+        'outtmpl': os.path.join(output_dir, f'{file_id}.%(ext)s'), # Use random ID to prevent file path issues
         'postprocessors': [{         # Extract audio and convert to mp3
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -31,8 +33,8 @@ def download_youtube_video(url: str, output_dir: str = "downloads"):
                 "success": True,
                 "title": info.get('title', 'Unknown Title'),
                 "id": info.get('id', 'Unknown ID'),
-                # Using the expected final filename since FFmpegExtractAudio ensures .mp3
-                "filepath": os.path.join(output_dir, f"{info.get('title')}.mp3")
+                # Since we used file_id in outtmpl, it is strictly this random string
+                "filepath": os.path.join(output_dir, f"{file_id}.mp3")
             }
     except Exception as e:
         print(f"An error occurred: {e}")

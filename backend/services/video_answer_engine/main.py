@@ -1,9 +1,36 @@
+import os
+# Suppress Hugging Face symlinks warning on Windows
+# os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
 from .downloader import download_youtube_video
+from faster_whisper import WhisperModel
+import logging
+
+# Configure logging for faster-whisper
+logging.basicConfig()
+logging.getLogger("faster_whisper").setLevel(logging.DEBUG)
 
 app = FastAPI(title="Video Answer Engine Service")
+
+# Initialize Whisper model lazily
+model = None
+
+def load_video_model():
+    global model
+    if model is not None:
+        return
+    model_size = "distil-large-v3"
+    try:
+        # Run on GPU with FP16
+        model = WhisperModel(model_size)
+        print(f"Successfully loaded {model_size} on CUDA.")
+    except Exception as e:
+        print(f"Failed to load on CUDA, falling back to CPU. Error: {e}")
+        # run on CPU with INT8 fallback
+        model = WhisperModel(model_size, device="cpu", compute_type="int8")
 
 # Pydantic models
 class TranscribeRequest(BaseModel):
@@ -41,12 +68,38 @@ async def transcribe_video(req: TranscribeRequest):
     video_title = download_result["title"]
     file_path = download_result["filepath"]
 
-    # Dummy transcription logic returning actual title
-    return TranscribeResponse(
-        status="success",
-        title=video_title,
-        transcription=f"Video successfully downloaded to '{file_path}'. \n\n[Dummy Transcription] \nThis is a placeholder for the actual `faster-whisper` output..."
-    )
+    try:
+        global model
+        if model is None:
+            print("DEBUG: model is not yet loaded, calling load_video_model()...")
+            load_video_model()
+            
+        print(f"DEBUG: Starting transcription!")
+        print(f"DEBUG: File path target is: {file_path}")
+        print(f"DEBUG: Does the file actually exist at path? {os.path.exists(file_path)}")
+        
+        # Utilize faster-whisper for transcription with VAD filter enabled
+        segments, info = model.transcribe(file_path, beam_size=5, vad_filter=True)
+        print(f"DEBUG: Got info: Language={info.language}, Duration={info.duration}")
+        
+        transcription_lines = []
+        for segment in segments:
+            # Format output as requested: [start -> end] text
+            transcription_lines.append("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+            
+        final_transcription = "\n".join(transcription_lines)
+        print("DEBUG: Transcription fully completed successfully!")
+
+        return TranscribeResponse(
+            status="success",
+            title=video_title,
+            transcription=final_transcription if final_transcription else "No speech detected in this video."
+        )
+    except Exception as e:
+        import traceback
+        print("DEBUG: Exception encountered!!! printing traceback:")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Transcription inference failed: {str(e)}")
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_with_video(req: ChatRequest):
